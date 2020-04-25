@@ -855,7 +855,12 @@ class Data_Reader_Rfactor2 extends Data_Reader {
 
 
             // Set driver to drivers array based on his position
-            $participants[$position-1] = $participant;
+            if ($position != -1) {
+                $participants[$position-1] = $participant;
+            } else {
+                $participants[] = $participant;
+            }
+
         }
 
 

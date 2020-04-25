@@ -22,3 +22,6 @@ composer.phar
 
 # Ignore vim tag files
 *.tags
+
+# Ignore Idea files
+/.idea/
