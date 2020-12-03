@@ -64,41 +64,12 @@ class Data_Reader_RaceRoomServer extends Data_Reader {
         // Gather all sessions
         foreach ($data['Sessions'] as $session_data)
         {
+
             // Init session
-            $session = Session::createInstance();
-
-            // Practice session by default
-            $type = Session::TYPE_PRACTICE;
-
-            // Check session type
-            switch(strtolower($name = $session_data['Type']))
-            {
-                case 'qualify':
-                    $type = Session::TYPE_QUALIFY;
-                    break;
-                case 'qualify2':
-                    $type = Session::TYPE_QUALIFY;
-                    break;
-                case 'qualify3':
-                    $type = Session::TYPE_QUALIFY;
-                    break;
-                case 'warmup':
-                    $type = Session::TYPE_WARMUP;
-                    break;
-                case 'race':
-                    $type = Session::TYPE_RACE;
-                    break;
-                case 'race2':
-                    $type = Session::TYPE_RACE;
-                    break;
-                case 'race3':
-                    $type = Session::TYPE_RACE;
-                    break;
-            }
+            $session = $this->helper->detectSession(strtolower($name = $session_data['Type']));
 
             // Set session values
-            $session->setType($type)
-                    ->setDate($date)
+            $session->setDate($date)
                     ->setOtherSettings($other_settings);
 
             // Set game
@@ -223,6 +194,27 @@ class Data_Reader_RaceRoomServer extends Data_Reader {
                         $lap->setPitLap($lap_data['PitStopOccured']);
                         $lap->setTime($time=(round($lap_data['Time'] / 1000, 4)));
 
+                        // Set sector times in seconds
+                        $sectors_total = 0;
+                        foreach ($this->helper->arrayGet($lap_data, 'SectorTimes', array())
+                                     as $sector_time)
+                        {
+                            if ($sector_time > 0) {
+                                $sector_time_calc = $sector_time - $sectors_total;
+                                $lap->addSectorTime(round($sector_time_calc / 1000, 4));
+                                $sectors_total = $sector_time;
+                            }
+                        }
+
+                        // Invalid lap
+                        if ($session->getType() !== Session::TYPE_RACE AND
+                            array_key_exists('Valid', $lap_data) AND
+                            ! $lap_data['Valid'])
+                        {
+                            $lap->setTime(null);
+                            $lap->setSectorTimes(array());
+                        }
+
                         // Add lap to participant
                         $participant->addLap($lap);
 
@@ -246,17 +238,42 @@ class Data_Reader_RaceRoomServer extends Data_Reader {
                                 // Defaults to other
                             );
 
-                            $type_messages = array(
-                                0 => 'Car to car collision',
-                                1 => 'Collision with a track object',
-                                2 => 'Going the wrong way',
-                                3 => 'Going off track',
-                                4 => 'Staying stationary on the track',
-                                5 => 'Losing control of the vehicle',
-                                6 => 'Not serving a penalty',
-                                7 => 'Disconnecting / Giving up before the end of a race',
-                                8 => 'Missing the race start',
-                            );
+                            // Game update date with incident index changes
+                            $game_update_date = new \DateTime('2020-05-06');
+                            $game_update_date->setTimezone(new \DateTimeZone(self::$default_timezone));
+
+                            // This log uses the new game update
+                            if ($date > $game_update_date) {
+                                // Use newer indexes
+                                $type_messages = array(
+                                    0 => 'Car to car collision',
+                                    1 => 'Collision with a track object',
+                                    2 => 'Going the wrong way',
+                                    3 => 'Going off track',
+                                    4 => 'Staying stationary on the track',
+                                    5 => 'Losing control of the vehicle',
+                                    6 => 'Invalid Lap',
+                                    7 => 'Not serving a penalty',
+                                    8 => 'Disconnecting / Giving up before the end of a race',
+
+                                    // Not confirmed key! But I guessed it should be included
+                                    9 => 'Missing the race start',
+                                );
+                            } else {
+                                $type_messages = array(
+                                    0 => 'Car to car collision',
+                                    1 => 'Collision with a track object',
+                                    2 => 'Going the wrong way',
+                                    3 => 'Going off track',
+                                    4 => 'Staying stationary on the track',
+                                    5 => 'Losing control of the vehicle',
+                                    6 => 'Not serving a penalty',
+                                    7 => 'Disconnecting / Giving up before the end of a race',
+                                    8 => 'Missing the race start',
+                                );
+                            }
+
+
 
                             foreach ($incidents as $incident_data)
                             {

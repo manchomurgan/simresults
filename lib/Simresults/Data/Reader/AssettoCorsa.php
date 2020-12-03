@@ -69,9 +69,6 @@ class Data_Reader_AssettoCorsa extends Data_Reader {
         // Gather all sessions
         foreach ($sessions_data as $session_data)
         {
-            // Init session
-            $session = Session::createInstance();
-
             // Get participants (do for each session to prevent re-used objects
             // between sessions)
             $participants = array();
@@ -96,32 +93,10 @@ class Data_Reader_AssettoCorsa extends Data_Reader {
                 $participants[] = $participant;
             }
 
-            // Practice session by default
-            $type = Session::TYPE_PRACTICE;
-
-            // Check session name to get type
-            // TODO: Should be checked when full game is released. Also create
-            //       tests for it!
-            switch(strtolower($name = $this->helper->arrayGet($session_data, 'name')))
-            {
-                case 'qualify session':
-                case 'qualify':
-                    $type = Session::TYPE_QUALIFY;
-                    break;
-                case 'warmup session':
-                    $type = Session::TYPE_WARMUP;
-                    break;
-                case 'race session':
-                case 'quick race':
-                case 'race':
-                    $type = Session::TYPE_RACE;
-                    break;
-            }
-
-            // Set session values
-            $session->setType($type)
-                    ->setName($name)
-                    ->setMaxLaps(
+            // Init session
+            $name = $this->helper->arrayGet($session_data, 'name');
+            $session = $this->helper->detectSession($name);
+            $session->setMaxLaps(
                         (int) $this->helper->arrayGet($session_data, 'lapsCount'))
                     ->setMaxMinutes(
                         (int) $this->helper->arrayGet($session_data, 'duration'));
@@ -170,13 +145,17 @@ class Data_Reader_AssettoCorsa extends Data_Reader {
                 $lap->setNumber($lap_data['lap']+1);
 
                 // Set lap time in seconds
-                $lap->setTime(round($lap_data['time'] / 1000, 4));
+                if ($lap_data['time'] > 0) {
+                    $lap->setTime(round($lap_data['time'] / 1000, 4));
+                }
 
                 // Set sector times in seconds
                 foreach ($this->helper->arrayGet($lap_data, 'sectors', array())
                              as $sector_time)
                 {
-                    $lap->addSectorTime(round($sector_time / 1000, 4));
+                    if ($sector_time > 0) {
+                        $lap->addSectorTime(round($sector_time / 1000, 4));
+                    }
                 }
 
                 // Set compound info
@@ -184,6 +163,15 @@ class Data_Reader_AssettoCorsa extends Data_Reader {
                     $this->helper->arrayGet($lap_data, 'tyre'));
                 $lap->setRearCompound(
                     $this->helper->arrayGet($lap_data, 'tyre'));
+
+                // Invalid lap
+                if ($lap_data['time'] === -1 AND
+                    $this->helper->arrayGet($lap_data, 'cuts') AND
+                    $session->getType() !== Session::TYPE_RACE)
+                {
+                    $lap->setTime(null);
+                    $lap->setSectorTimes(array());
+                }
 
                 // Add lap to participant
                 $lap_participant->addLap($lap);
@@ -196,6 +184,10 @@ class Data_Reader_AssettoCorsa extends Data_Reader {
                 $participants_sorted = array();
                 foreach ($race_result as $race_position => $race_position_driver)
                 {
+                    if ( ! isset($participants[$race_position_driver])) {
+                        continue;
+                    }
+
                     $participants_sorted[] =
                         $participants[$race_position_driver];
                 }

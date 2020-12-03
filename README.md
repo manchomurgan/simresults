@@ -23,10 +23,14 @@ This project is created and maintained by
 Please consider [donating](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=L9L982XNK7DAA&lc=US&item_name=Simresults&item_number=Simresults&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted)
 to cover future development.
 
-* Website: <http://simresults.net>
-* Twitter: [@simresults](http://twitter.com/simresults)
+It's also possible to use the Simresults website remote results [API](https://simresults.net/api). This requires much less work and programming knowledge.
+
+* Website: [simresults.net](https://simresults.net)
+* Twitter (inactive): [@simresults](http://twitter.com/simresults) and [@mauserrifleNL](http://twitter.com/mauserrifleNL)
 * Email: <mauserrifle@gmail.com>
 * Donate: [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=L9L982XNK7DAA&lc=US&item_name=Simresults&item_number=Simresults&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted)
+* Sponsor: [GitHub](https://github.com/sponsors/mauserrifle) (please email me for alternatives)
+
 
 ## Supported games
 
@@ -35,9 +39,11 @@ Simresults supports a wide range of games:
 * rFactor
 * rFactor 2
 * Project Cars
+* Project Cars 2
 * Assetto Corsa
 * Assetto Corsa Competizione
 * Automobilista
+* Automobilista 2
 * Game Stock Car 2012
 * Game Stock Car 2013
 * Game Stock Car Extreme
@@ -140,7 +146,7 @@ lap.
 
 ## Requirements
 
-- PHP 5.3
+- PHP >= 5.3
 - Composer (for easy installing and autoloading)
 
 ## Installation and example
@@ -185,7 +191,7 @@ Create index.php:
     // Get a reader using the source file
     $reader = \Simresults\Data_Reader::factory($file);
 
-    // Get the session
+    // Get the first session. Note: Use `getSessions()` to get all sessions
     $session = $reader->getSession();
 
     // Get participants sorted by their position
@@ -217,7 +223,11 @@ are carefully documented.
 
 ## Sponsors
 
-Simresults development is sponsored by [Coach Dave - David Perel](https://www.davidperel.net/coaching/?ref=simresults).
+Big thanks to the following sponsors for supporting Simresults!
+Please pay them a visit :)
+
+* [Coach Dave - David Perel](https://www.davidperel.net/coaching/?ref=simresults)
+* [Sim Racing Online](https://simracingonline.co.uk/?ref=simresults)
 
 ## Bugs
 

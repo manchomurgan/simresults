@@ -59,6 +59,27 @@ class AssettoCorsaCompetizioneReaderTest extends PHPUnit_Framework_TestCase {
     }
 
 
+    public function testDriverSwapping()
+    {
+        // The path to the data source
+        $file_path = realpath(__DIR__.
+            '/logs/assettocorsa-competizione/'.
+            'race.modified.with.swaps.json');
+
+        // Get the race session
+        $session = Data_Reader::factory($file_path)->getSession();
+
+        // Get first participant we modified with extra driver
+        $participants = $session->getParticipants();
+        $participant = $participants[0];
+
+        // Assert driver of first and second lap
+        $this->assertSame('Second Driver',
+            $participant->getLap(1)->getDriver()->getName());
+        $this->assertSame('Andrea Mel',
+            $participant->getLap(2)->getDriver()->getName());
+    }
+
 
     /**
      * Test qualify sessions
@@ -75,6 +96,7 @@ class AssettoCorsaCompetizioneReaderTest extends PHPUnit_Framework_TestCase {
 
         //-- Validate
         $this->assertSame(Session::TYPE_QUALIFY, $session->getType());
+        $this->assertNull($session->getName());
 
         // Get participants
         $participants = $session->getParticipants();
@@ -120,6 +142,7 @@ class AssettoCorsaCompetizioneReaderTest extends PHPUnit_Framework_TestCase {
 
         //-- Validate
         $this->assertSame(Session::TYPE_PRACTICE, $session->getType());
+        $this->assertNull($session->getName());
 
         // Get participants
         $participants = $session->getParticipants();
@@ -191,6 +214,152 @@ class AssettoCorsaCompetizioneReaderTest extends PHPUnit_Framework_TestCase {
 
     }
 
+    /**
+     * Test no exception on missing carId in cars
+     */
+    public function testNoExceptionOnMissingCarIdInCars()
+    {
+        // The path to the data source
+        $file_path = realpath(__DIR__.
+            '/logs/assettocorsa-competizione/'.
+            'race.with.missing.carId.attribute.json');
+
+        $session = Data_Reader::factory($file_path)->getSession();
+        $participants = $session->getParticipants();
+        $this->assertSame('Alberto For',
+            $participants[0]->getDriver()->getName());
+    }
+
+    /**
+     * Test no exception on missing driver id used in laps
+     */
+    public function testNoExceptionOnMissingDriverIdUsedInLaps()
+    {
+        // The path to the data source
+        $file_path = realpath(__DIR__.
+            '/logs/assettocorsa-competizione/'.
+            'laps.with.unknown.carid.json');
+
+        // Get the session
+        $session = Data_Reader::factory($file_path)->getSession();
+
+        // Get participants
+        $participants = $session->getParticipants();
+
+        // Assert drivers
+        $this->assertSame('Alberto For',
+            $participants[0]->getDriver()->getName());
+    }
+
+
+    /**
+     * Test no exception on missing laps attribute
+     */
+    public function testNoExceptionOnMissingLaps()
+    {
+        // The path to the data source
+        $file_path = realpath(__DIR__.
+            '/logs/assettocorsa-competizione/'.
+            'no.laps.json');
+
+        // Get the session
+        $session = Data_Reader::factory($file_path)->getSession();
+    }
+
+    /**
+     * Test no exception on missing leaderBoardLines
+     */
+    public function testNoExceptionOnMissingLeaderBoardLines()
+    {
+        // The path to the data source
+        $file_path = realpath(__DIR__.
+            '/logs/assettocorsa-competizione/'.
+            'race.without.leaderBoardLines,attribute.json');
+
+        // Get the session
+        $session = Data_Reader::factory($file_path)->getSession();
+    }
+
+    /**
+     * Test no exception on missing teamName
+     */
+    public function testNoExceptionOnMissingTeamName()
+    {
+        // The path to the data source
+        $file_path = realpath(__DIR__.
+            '/logs/assettocorsa-competizione/'.
+            'race.with.missing.driver.teamName.attribute.json');
+
+        // Get the session
+        $session = Data_Reader::factory($file_path)->getSession();
+    }
+
+    /**
+     * Test no exception and name unknown on missing carModel
+     */
+    public function testNoExceptionAndNameUnknownOnMissingCarModel()
+    {
+        // The path to the data source
+        $file_path = realpath(__DIR__.
+            '/logs/assettocorsa-competizione/'.
+            'race.with.missing.carModel.attribute.json');
+
+        // Assert vehicle name
+        $session = Data_Reader::factory($file_path)->getSession();
+        $participants = $session->getParticipants();
+        $this->assertSame('Unknown', $participants[0]->getVehicle()->getName());
+    }
+
+    /**
+     * Test client log file differences
+     */
+    public function testClientRaceLog()
+    {
+        // The path to the data source
+        $file_path = realpath(__DIR__.
+            '/logs/assettocorsa-competizione-client/'.
+            'race.json');
+
+        // Get the session
+        $session = Data_Reader::factory($file_path)->getSession();
+
+        // Is race
+        $this->assertSame(Session::TYPE_RACE, $session->getType());
+
+        // Get participants
+        $participants = $session->getParticipants();
+
+        // Assert drivers
+        $this->assertSame('Rob R',
+            $participants[0]->getDriver()->getName());
+        $this->assertSame(23,
+            $participants[0]->getNumberOfLaps());
+
+        // Validate track
+        $track = $session->getTrack();
+        $this->assertSame('Unknown', $track->getVenue());
+
+        // Other settings
+        $this->assertSame(array(
+            'isWetSession' => 0,
+            'dateHour' => '14',
+            'dateMinute' => '0',
+            'raceDay' => '2',
+            'timeMultiplier' => '1.5',
+            'preSessionDuration' => '1',
+            'sessionDuration' => '2400',
+            'overtimeDuration' => '180',
+            'round' => '1',
+            'sessionType' => '10',
+            'dynamicTrackMultiplier' => '1',
+            'idealLineGrip' => '0.98000001907349',
+            'outsideLineGrip' => '0.5',
+            'marblesLevel' => '0',
+            'puddlesLevel' => '0',
+            'wetDryLineLevel' => '0',
+            'wetLevel' => '0',
+        ), $session->getOtherSettings());
+    }
 
 
 
@@ -223,7 +392,10 @@ class AssettoCorsaCompetizioneReaderTest extends PHPUnit_Framework_TestCase {
         $server = $this->getWorkingReader()->getSession()->getServer();
 
         // Validate server
-        $this->assertSame('Unknown', $server->getName());
+        $this->assertSame(
+            "Simresults ServerName 7 of 10 (Practice 90' RACE Sept-27th)",
+            $server->getName()
+        );
     }
 
 
@@ -266,12 +438,27 @@ class AssettoCorsaCompetizioneReaderTest extends PHPUnit_Framework_TestCase {
                           $participant->getDriver()->getName());
         $this->assertSame('Mercedes AMG GT3',
                           $participant->getVehicle()->getName());
+        $this->assertSame('123', $participant->getDriver()->getDriverId());
+        $this->assertSame(82, $participant->getVehicle()->getNumber());
+        $this->assertSame('Overall', $participant->getVehicle()->getClass());
         $this->assertSame('',
                           $participant->getTeam());
         $this->assertSame(1, $participant->getPosition());
+        $this->assertSame(1, $participant->getClassPosition());
         $this->assertSame(Participant::FINISH_NORMAL,
             $participant->getFinishStatus());
         $this->assertSame(2329.129, $participant->getTotalTime());
+
+        // Different cup
+        $participant = $participants[1];
+        $this->assertSame(2, $participant->getPosition());
+        $this->assertSame(1, $participant->getClassPosition());
+        $this->assertSame('Pro-Am', $participant->getVehicle()->getClass());
+        $participant = $participants[2];
+        $this->assertSame(3, $participant->getPosition());
+        $this->assertSame(2, $participant->getClassPosition());
+        $this->assertSame('Overall', $participant->getVehicle()->getClass());
+
     }
 
 

@@ -818,6 +818,23 @@ class Rfactor2ReaderTest extends PHPUnit_Framework_TestCase {
                 $reader->getSession()->getType());
     }
 
+    /**
+     * Test reading the chat messages without html entities
+     */
+    public function testFixingHtmlEntities()
+    {
+        // Get the data reader for the given data source
+        $reader = Data_Reader::factory(
+                realpath(__DIR__.'/logs/rfactor2/multiple.qualy.xml'));
+
+        // Validate chat message
+        $session = $reader->getSession();
+        $chats = $session->getChats();
+        $this->assertSame(
+            "Larry Watson: no, I don't know why some times aren't counting",
+            $chats[4]->getMessage());
+    }
+
 
 
     //---------------------------------------------------------------
@@ -849,6 +866,7 @@ class Rfactor2ReaderTest extends PHPUnit_Framework_TestCase {
 
         //-- Validate other
         $this->assertSame(Session::TYPE_RACE, $session->getType());
+        $this->assertNull($session->getName());
         $this->assertSame(0, $session->getMaxLaps());
         $this->assertSame(20, $session->getMaxMinutes());
         $this->assertSame(10, $session->getLastedLaps());
