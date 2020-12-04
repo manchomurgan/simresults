@@ -1,6 +1,8 @@
 <?php
 namespace Simresults;
 
+use DateTime;
+
 /**
  * The session class. Main point for results.
  *
@@ -49,7 +51,7 @@ class Session {
     protected $participants = array();
 
     /**
-     * @var  \DateTime  The date and time this session started
+     * @var  DateTime  The date and time this session started
      */
     protected $date;
 
@@ -232,7 +234,7 @@ class Session {
     /**
      * Get the track this session was driven on
      *
-     * @return  Server
+     * @return Track
      */
     public function getTrack()
     {
@@ -276,10 +278,10 @@ class Session {
     /**
      * Set the date and time this session started
      *
-     * @param   \DateTime  $date
+     * @param   DateTime  $date
      * @return  Session
      */
-    public function setDate(\DateTime $date)
+    public function setDate(DateTime $date)
     {
         $this->date = $date;
         return $this;
@@ -288,7 +290,7 @@ class Session {
     /**
      * Get the date and time this session started
      *
-     * @return  \DateTime
+     * @return  DateTime
      */
     public function getDate()
     {
